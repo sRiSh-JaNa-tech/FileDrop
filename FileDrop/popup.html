@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FILEDROP</title>
+    <link rel="stylesheet" href="popup.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="onboarding-ui" class="screen" style="display: none;">
+        <div class="onboarding-content">
+            <div class="onboarding-logo">
+                <img src="assets/airdrop.png" alt="FileDrop Logo">
+            </div>
+            <h2>Welcome to FileDrop</h2>
+            <p>Please enter your name to get started</p>
+            <div class="onboarding-input-group">
+                <input type="text" id="initial-name-input" placeholder="Your Name" autocomplete="off">
+                <button id="get-started-btn" class="btn-primary">Get Started</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-ui" class="screen" style="display: none;">
+        <header class="header">
+            <div class="welcome">
+                <h1 id="user-name">Welcome, User</h1>
+                <div class="edit-name-flow">
+                    <button class="btn btn-secondary" id="change-name">Change Name</button>
+                    <input type="text" id="name-edit-input" class="name-input-field" style="display: none;"
+                        placeholder="Enter name...">
+                </div>
+            </div>
+            <div class="status-pill">
+                <span class="status-dot"></span>
+                Basic
+            </div>
+        </header>
+
+        <section class="connection-section">
+            <div class="input-wrapper">
+                <input type="text" id="peer-id" class="peer-input" placeholder="Enter peer ID" autocomplete="off">
+                <div class="connection-status" id="connection-status">Not connected</div>
+            </div>
+            <button class="btn btn-primary" id="connect-btn">Connect</button>
+        </section>
+
+        <button class="avatar-button" id="avatar-btn" aria-label="Change avatar or view profile">
+            <div class="avatar-circle" id="avatar">
+                <img src="assets/airdrop.png" alt="FileDrop Icon" class="avatar-image">
+            </div>
+        </button>
+
+        <input type="file" id="file-input" style="display: none;">
+        <button class="btn btn-bottom" id="files-btn">Select File</button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
