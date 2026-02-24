@@ -1,8 +1,9 @@
-import { RedisClientType } from "redis";
 import { createClient } from 'redis';
 
+type RedisClient = ReturnType<typeof createClient>;
+
 export async function createUser(
-    client: RedisClientType,
+    client: RedisClient,
     userId: string,
     name: string,
     peerId: string
@@ -15,15 +16,15 @@ export async function createUser(
         name,
         peerId
     });
-
     multi.set(`peer:${peerId}`, userId);
     multi.set(`username:${normalizedName}`, userId);
 
     await multi.exec();
+    return { success: true, data: { userId, name, peerId } };
 }
 
 export async function findUserByName(
-    client: RedisClientType,
+    client: RedisClient,
     userName: string
 ) {
     const normalizedName = userName.toLowerCase();
@@ -43,20 +44,17 @@ export async function findUserByName(
 }
 
 export async function getPeerForConnection(
-    client: RedisClientType,
-    targetUserName: string
+    client: RedisClient,
+    peerId: string
 ) {
     try {
-        const normalizedName = targetUserName.toLowerCase();
-
-        const userId = await client.get(`username:${normalizedName}`);
+        const userId = await client.get(`peer:${peerId}`);
 
         if (!userId) {
-            return { success: false, error: "User not found" };
+            return { success: false, error: "User not found for this Peer ID" };
         }
 
         const user = await client.hGetAll(`user:${userId}`);
-
         if (Object.keys(user).length === 0) {
             return { success: false, error: "User data missing" };
         }
@@ -75,3 +73,23 @@ export async function getPeerForConnection(
     }
 }
 
+export async function deleteUser(
+    client: RedisClient,
+    userId: string
+) {
+    const user = await client.hGetAll(`user:${userId}`);
+    if (!user || Object.keys(user).length === 0) return;
+
+    const name = user["name"];
+    const peerId = user["peerId"];
+    if (!name || !peerId) return;
+
+    const normalizedName = name.toLowerCase();
+
+    const multi = client.multi();
+    multi.del(`user:${userId}`);
+    multi.del(`username:${normalizedName}`);
+    multi.del(`peer:${peerId}`);
+
+    await multi.exec();
+}
