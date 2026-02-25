@@ -45,13 +45,14 @@ export async function findUserByName(
 
 export async function getPeerForConnection(
     client: RedisClient,
-    peerId: string
+    userName: string
 ) {
     try {
-        const userId = await client.get(`peer:${peerId}`);
+        const normalizedName = userName.toLowerCase();
+        const userId = await client.get(`username:${normalizedName}`);
 
         if (!userId) {
-            return { success: false, error: "User not found for this Peer ID" };
+            return { success: false, error: "User not found for this Name" };
         }
 
         const user = await client.hGetAll(`user:${userId}`);
