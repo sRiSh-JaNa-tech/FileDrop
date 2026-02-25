@@ -14,6 +14,19 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        uptime: process.uptime(),
+        timestamp: new Date()
+    });
+});
+
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
 // Get peer info by peerId
 app.get("/connect/:peerId", async (req: Request, res: Response) => {
   const { peerId } = req.params;
@@ -48,7 +61,7 @@ app.get("/get-peer-info", async (req: Request, res: Response) => {
     }
     const result = await getPeerForConnection(client, peerId as string);
     if (!result.success) {
-        return res.status(404).json(result);
+        return res.status(404).json(result)
     }
     res.json(result);
 });
