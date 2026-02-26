@@ -1,41 +1,27 @@
 import express from 'express';
 import { Request, Response } from 'express';
-import cors from 'cors';
+import app from './app';
 import http from 'http';
 import { getPeerForConnection, createUser, deleteUser } from './models/User';
 import { client, connectToRedis } from './utils/redisClient';
 import rndName from './utils/rndNames';
 
 const PORT = 3000;
-const app = express();
-app.use(cors({
-  origin: "*",   // allow all (for development)
-  methods: ["GET", "POST", "DELETE"],
-  allowedHeaders: ["Content-Type"]
-}));
-app.use(express.json());
 
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    uptime: process.uptime(),
-    timestamp: new Date()
-  });
-});
-
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
 
 // Get peer info by userName
 app.get("/connect/:userName", async (req: Request, res: Response) => {
-  const { userName } = req.params;
-  const result = await getPeerForConnection(client, userName as string);
-  if (!result.success) {
-    return res.status(404).json(result);
+  try {
+    const { userName } = req.params;
+    const result = await getPeerForConnection(client, userName as string);
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(`[Connection Error] Failed to get peer for ${req.params.userName}:`, err);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
-  res.json(result);
 });
 
 // Set user name and ID
@@ -56,15 +42,20 @@ app.post("/set-user", async (req: Request, res: Response) => {
 });
 
 app.get("/get-peer-info", async (req: Request, res: Response) => {
-  const { userName } = req.query;
-  if (!userName || typeof userName !== "string") {
-    return res.status(400).json({ success: false, error: "userName query parameter is required" });
+  try {
+    const { userName } = req.query;
+    if (!userName || typeof userName !== "string") {
+      return res.status(400).json({ success: false, error: "userName query parameter is required" });
+    }
+    const result = await getPeerForConnection(client, userName as string);
+    if (!result.success) {
+      return res.status(404).json(result)
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(`[Peer Info Error] Failed to get peer info for ${req.query.userName}:`, err);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
-  const result = await getPeerForConnection(client, userName as string);
-  if (!result.success) {
-    return res.status(404).json(result)
-  }
-  res.json(result);
 });
 
 app.get("/random-name", (req: Request, res: Response) => {
