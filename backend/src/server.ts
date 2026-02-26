@@ -8,6 +8,13 @@ import rndName from './utils/rndNames';
 
 const PORT = 3000;
 
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date()
+  });
+});
 
 // Get peer info by userName
 app.get("/connect/:userName", async (req: Request, res: Response) => {

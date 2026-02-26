@@ -25,12 +25,4 @@ app.use(createRateLimiter({
   refillRate: 5
 }));
 
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    uptime: process.uptime(),
-    timestamp: new Date()
-  });
-});
-
 export default app;
