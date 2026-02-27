@@ -1,40 +1,34 @@
 import express from 'express';
 import { Request, Response } from 'express';
-import cors from 'cors';
+import app from './app';
 import http from 'http';
 import { getPeerForConnection, createUser, deleteUser } from './models/User';
 import { client, connectToRedis } from './utils/redisClient';
+import rndName from './utils/rndNames';
 
-const PORT = 3000;
-const app = express();
-app.use(cors({
-  origin: "*",   // allow all (for development)
-  methods: ["GET", "POST", "DELETE"],
-  allowedHeaders: ["Content-Type"]
-}));
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
 app.get("/health", (req, res) => {
-    res.status(200).json({
-        status: "ok",
-        uptime: process.uptime(),
-        timestamp: new Date()
-    });
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date()
+  });
 });
 
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-});
-
-// Get peer info by peerId
-app.get("/connect/:peerId", async (req: Request, res: Response) => {
-  const { peerId } = req.params;
-  const result = await getPeerForConnection(client, peerId as string);
-  if (!result.success) {
-    return res.status(404).json(result);
+// Get peer info by userName
+app.get("/connect/:userName", async (req: Request, res: Response) => {
+  try {
+    const { userName } = req.params;
+    const result = await getPeerForConnection(client, userName as string);
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(`[Connection Error] Failed to get peer for ${req.params.userName}:`, err);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
-  res.json(result);
 });
 
 // Set user name and ID
@@ -55,15 +49,24 @@ app.post("/set-user", async (req: Request, res: Response) => {
 });
 
 app.get("/get-peer-info", async (req: Request, res: Response) => {
-    const { peerId } = req.query;
-    if (!peerId || typeof peerId !== "string") {
-        return res.status(400).json({ success: false, error: "peerId query parameter is required" });
+  try {
+    const { userName } = req.query;
+    if (!userName || typeof userName !== "string") {
+      return res.status(400).json({ success: false, error: "userName query parameter is required" });
     }
-    const result = await getPeerForConnection(client, peerId as string);
+    const result = await getPeerForConnection(client, userName as string);
     if (!result.success) {
-        return res.status(404).json(result)
+      return res.status(404).json(result)
     }
     res.json(result);
+  } catch (err) {
+    console.error(`[Peer Info Error] Failed to get peer info for ${req.query.userName}:`, err);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+app.get("/random-name", (req: Request, res: Response) => {
+  res.json({ success: true, name: rndName() });
 });
 
 // De-register user
