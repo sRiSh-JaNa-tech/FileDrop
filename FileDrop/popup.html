@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
@@ -18,10 +19,10 @@
                 <img src="assets/airdrop.png" alt="FileDrop Logo">
             </div>
             <h2>Welcome to FileDrop</h2>
-            <p>Please enter your name to get started</p>
+            <p>Your random identity is ready</p>
             <div class="onboarding-input-group">
-                <input type="text" id="initial-name-input" placeholder="Your Name" autocomplete="off">
-                <button id="get-started-btn" class="btn-primary">Get Started</button>
+                <input type="text" id="initial-name-input" placeholder="Generating name..." readonly>
+                <button id="get-started-btn" class="btn-primary">Connect with this Name</button>
             </div>
         </div>
     </div>
@@ -29,38 +30,53 @@
     <div id="main-ui" class="screen" style="display: none;">
         <header class="header">
             <div class="welcome">
-                <h1 id="user-name">Welcome, User</h1>
-                <div class="edit-name-flow">
-                    <button class="btn btn-secondary" id="change-name">Change Name</button>
-                    <input type="text" id="name-edit-input" class="name-input-field" style="display: none;"
-                        placeholder="Enter name...">
+                <h1 id="user-name">Loading...</h1>
+                <div class="my-id-container">
+                    <span class="id-label">MY ID:</span>
+                    <span id="my-peer-id" class="id-value">Activate to get ID</span>
                 </div>
             </div>
-            <div class="status-pill">
-                <span class="status-dot"></span>
-                Basic
-            </div>
+            <button id="status-toggle-btn" class="status-btn inactive" aria-label="Toggle active status">
+                Inactive
+            </button>
         </header>
 
         <section class="connection-section">
             <div class="input-wrapper">
-                <input type="text" id="peer-id" class="peer-input" placeholder="Enter peer ID" autocomplete="off">
+                <input type="text" id="peer-id" class="peer-input" placeholder="Enter target name" autocomplete="off">
                 <div class="connection-status" id="connection-status">Not connected</div>
             </div>
             <button class="btn btn-primary" id="connect-btn">Connect</button>
         </section>
 
-        <button class="avatar-button" id="avatar-btn" aria-label="Change avatar or view profile">
-            <div class="avatar-circle" id="avatar">
-                <img src="assets/airdrop.png" alt="FileDrop Icon" class="avatar-image">
+        <!-- New Transfer Box -->
+        <div class="transfer-box" id="transfer-box">
+            <div class="transfer-content">
+                <div class="transfer-info">
+                    <span id="file-name-label">No file selected</span>
+                    <span id="transfer-status">Ready</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
             </div>
-        </button>
+            <button class="btn btn-secondary-outline" id="files-btn">Select File</button>
+        </div>
+
+        <div class="action-center">
+            <button class="avatar-button" id="avatar-btn" aria-label="Send File" title="Click to send file">
+                <div class="avatar-circle" id="avatar">
+                    <img src="assets/airdrop.png" alt="FileDrop Icon" class="avatar-image">
+                </div>
+            </button>
+        </div>
 
         <input type="file" id="file-input" style="display: none;">
-        <button class="btn btn-bottom" id="files-btn">Select File</button>
     </div>
 
+    <script src="js/peerjs.min.js"></script>
     <script src="popup.js"></script>
+    <script src="transfer.js"></script>
 </body>
 
 </html>

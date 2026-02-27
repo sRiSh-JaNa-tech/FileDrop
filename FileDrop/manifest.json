@@ -15,8 +15,16 @@
         "64": "assets/icon64.png",
         "128": "assets/icon128.png"
     },
+    "background": {
+        "service_worker": "background.js"
+    },
     "permissions": [
         "activeTab",
-        "storage"
+        "storage",
+        "alarms"
+    ],
+    "host_permissions": [
+        "http://localhost:3000/*",
+        "https://*.onrender.com/*"
     ]
 }
