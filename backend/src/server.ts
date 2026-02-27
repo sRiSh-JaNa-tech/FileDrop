@@ -6,7 +6,7 @@ import { getPeerForConnection, createUser, deleteUser } from './models/User';
 import { client, connectToRedis } from './utils/redisClient';
 import rndName from './utils/rndNames';
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.get("/health", (req, res) => {
   res.status(200).json({
