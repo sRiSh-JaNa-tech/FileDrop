@@ -12,13 +12,16 @@ export async function createUser(
 
     const multi = client.multi();
 
+    const setSuccess = await client.set(`username:${normalizedName}`, userId, {NX : true});
+    if(!setSuccess){
+        return { success: false, error: "Username already taken" };
+    }
     multi.hSet(`user:${userId}`, {
         name,
         peerId
     });
     multi.set(`peer:${peerId}`, userId);
-    multi.set(`username:${normalizedName}`, userId);
-
+    
     await multi.exec();
     return { success: true, data: { userId, name, peerId } };
 }
