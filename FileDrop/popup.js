@@ -4,6 +4,12 @@ function updateName(newName) {
     });
 }
 
+function getStorage(keys) {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(keys, resolve);
+    });
+}
+
 async function getRandomName() {
     try {
         const response = await fetch("https://filedropserver-96q5.onrender.com/random-name");
@@ -15,8 +21,7 @@ async function getRandomName() {
     }
 }
 
-async function setUser(name) {
-    let userId = crypto.randomUUID();
+async function setUser(name, userId) {
     const peerId = "user-" + Math.random().toString(36).substring(2, 10);
     try {
         const response = await fetch("https://filedropserver-96q5.onrender.com/set-user", {
@@ -66,19 +71,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let selectedFile = null;
 
+    const syncConnectionUI = () => {
+        const info = getConnectionInfo();
+        isConnected = info.isConnected;
+
+        if (isConnected) {
+            connectBtn.innerText = 'Disconnect';
+            connectBtn.style.background = '#ef4444';
+            connectBtn.style.color = 'white';
+            statusText.innerText = 'Connected to: ' + (info.remoteName || "Peer");
+            statusText.style.color = 'var(--cyan)';
+            peerInput.disabled = true;
+            if (avatarBtn) avatarBtn.classList.add('connected-glow');
+        } else {
+            connectBtn.innerText = 'Connect';
+            connectBtn.style.background = '';
+            connectBtn.style.color = '';
+            statusText.innerText = 'Not connected';
+            statusText.style.color = '';
+            peerInput.disabled = false;
+            if (avatarBtn) avatarBtn.classList.remove('connected-glow');
+        }
+    };
+
     // Set Peer Identity Callback (for when we ARE the receiver)
     setPeerIdentityCallback((remoteName) => {
-        isConnected = true;
-        connectBtn.innerText = 'Disconnect';
-        connectBtn.style.background = '#ef4444';
-        connectBtn.style.color = 'white';
-
-        statusText.innerText = 'Connected to: ' + remoteName;
-        statusText.style.color = 'var(--cyan)';
-        peerInput.disabled = true;
-
-        // Start glowing when connected
-        if (avatarBtn) avatarBtn.classList.add('connected-glow');
+        syncConnectionUI();
     });
 
     // Handle remote disconnection
@@ -156,6 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 isActive = true;
                 updateStatusUI(true);
             }
+            // Check if we are already connected to someone
+            syncConnectionUI();
         } else {
             // First time or generic name — fetch a fresh random name from the server
             onboardingUI.style.display = 'flex';
@@ -180,60 +200,67 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const toggleStatus = async () => {
-        chrome.storage.local.get(['userName'], async (result) => {
-            const name = result.userName;
-            chrome.storage.local.get(['userId'], async (userResult) => {
-                let userId = userResult.userId;
-                if (!userId) {
-                    userId = crypto.randomUUID();
-                    chrome.storage.local.set({ userId });
-                }
+        const { userName, userId: storedUserId } = await getStorage(['userName', 'userId']);
+        const name = userName;
+        let userId = storedUserId;
 
-                if (!isActive) {
-                    // Activate: Register user
-                    console.log(`[Status Toggle] Activating presence for: ${name}`);
-                    const success = await setUser(name);
-                    if (success) {
-                        isActive = true;
-                        chrome.storage.local.set({ isActive: true });
-                        updateStatusUI(true);
+        if (!userId) {
+            userId = crypto.randomUUID();
+            chrome.storage.local.set({ userId });
+        }
 
-                        // Update PeerID display after activation (since setUser generates it)
-                        chrome.storage.local.get(['peerId'], (res) => {
-                            if (res.peerId && myPeerIdDisplay) myPeerIdDisplay.innerText = res.peerId;
-                        });
+        if (!isActive) {
+            // Activate: Register user
+            console.log(`[Status Toggle] Activating presence for: ${name}`);
+            const success = await setUser(name, userId);
+            if (success) {
+                isActive = true;
+                chrome.storage.local.set({ isActive: true });
+                updateStatusUI(true);
 
-                        initPeer().catch(console.error);
-                    }
+                // Update PeerID display after activation (since setUser generates it)
+                const { peerId } = await getStorage(['peerId']);
+                if (peerId && myPeerIdDisplay) myPeerIdDisplay.innerText = peerId;
+
+                initPeer().catch(console.error);
+            }
+        } else {
+            // Inactivate: Delete user
+            console.log(`[Status Toggle] Deactivating presence for user ID: ${userId}`);
+            try {
+                const response = await fetch(`https://filedropserver-96q5.onrender.com/user/${userId}`, {
+                    method: "DELETE"
+                });
+                if (response.ok) {
+                    console.log(`[Status Toggle] Deactivation confirmed by server for ID: ${userId}`);
+                    isActive = false;
+                    chrome.storage.local.set({ isActive: false });
+                    updateStatusUI(false);
+
+                    // Fully destroy peer and connections on deactivation
+                    if (isConnected) disconnectPeer();
+                    destroyPeer();
                 } else {
-                    // Inactivate: Delete user
-                    console.log(`[Status Toggle] Deactivating presence for user ID: ${userId}`);
-                    try {
-                        const response = await fetch(`https://filedropserver-96q5.onrender.com/user/${userId}`, {
-                            method: "DELETE"
-                        });
-                        if (response.ok) {
-                            console.log(`[Status Toggle] Deactivation confirmed by server for ID: ${userId}`);
-                            isActive = false;
-                            chrome.storage.local.set({ isActive: false });
-                            updateStatusUI(false);
-
-                            // Fully destroy peer and connections on deactivation
-                            if (isConnected) disconnectPeer();
-                            destroyPeer();
-                        } else {
-                            console.error(`[Status Toggle Error] Deactivation failed for ID: ${userId}, Status: ${response.status}`);
-                        }
-                    } catch (err) {
-                        console.error(`[Status Toggle Error] Network error deactivating ID: ${userId}:`, err);
-                    }
+                    console.error(`[Status Toggle Error] Deactivation failed for ID: ${userId}, Status: ${response.status}`);
                 }
-            });
-        });
+            } catch (err) {
+                console.error(`[Status Toggle Error] Network error deactivating ID: ${userId}:`, err);
+            }
+        }
     };
 
+
     if (statusToggleBtn) {
-        statusToggleBtn.addEventListener('click', toggleStatus);
+        statusToggleBtn.addEventListener('click', async () => {
+            statusToggleBtn.disabled = true;
+            try {
+                await toggleStatus();
+            } catch (err) {
+                console.error("Error toggling status:", err);
+            } finally {
+                statusToggleBtn.disabled = false;
+            }
+        });
     }
 
     const showMainUI = (name, peerId) => {
@@ -243,24 +270,16 @@ document.addEventListener('DOMContentLoaded', () => {
         mainUI.style.display = 'flex';
     };
 
+    syncConnectionUI();
+
     // Connection Handler
     const disconnectPeer = () => {
-        isConnected = false;
-        connectBtn.innerHTML = 'Connect';
-        connectBtn.style.background = '';
-        connectBtn.style.color = '';
-        statusText.innerText = 'Not connected';
-        statusText.style.color = '';
-        peerInput.value = '';
-        peerInput.disabled = false;
-
-        // Ensure connection is closed
+        console.log("Disconnecting peer...");
+        // Ensure connection is closed in transfer.js
         if (typeof conn !== 'undefined' && conn) {
             conn.close();
         }
-
-        // Stop glowing
-        if (avatarBtn) avatarBtn.classList.remove('connected-glow');
+        syncConnectionUI();
     };
 
     if (connectBtn) {

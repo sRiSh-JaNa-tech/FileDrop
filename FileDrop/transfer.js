@@ -6,6 +6,14 @@ function getStorage(keys) {
 
 let peer = null;
 let conn = null;
+let remotePeerName = null;
+
+function getConnectionInfo() {
+    return {
+        isConnected: !!(conn && conn.open),
+        remoteName: remotePeerName
+    };
+}
 
 async function initPeer() {
     const { peerId } = await getStorage(["peerId"]);
@@ -20,44 +28,8 @@ async function initPeer() {
         destroyPeer();
     }
 
-    return new Promise(async (resolve, reject) => {
-        let iceConfig;
-        try {
-            const res = await fetch('https://filedropserver-96q5.onrender.com/ice-config');
-            const data = await res.json();
-            iceConfig = data.iceServers;
-            console.log("Loaded ICE config from server");
-        } catch (e) {
-            console.warn("Failed to fetch ICE config, using fallback:", e);
-            iceConfig = [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' },
-                {
-                    urls: 'turn:openrelay.metered.ca:80',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turn:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                },
-                {
-                    urls: 'turns:openrelay.metered.ca:443',
-                    username: 'openrelayproject',
-                    credential: 'openrelayproject'
-                }
-            ];
-        }
-
-        peer = new Peer(peerId, {
-            config: {
-                iceServers: iceConfig
-            }
-        });
+    return new Promise((resolve, reject) => {
+        peer = new Peer(peerId);
 
         peer.on("open", (id) => {
             console.log("Peer connection established with ID:", id);
@@ -103,6 +75,7 @@ function destroyPeer() {
         peer.destroy();
         peer = null;
     }
+    remotePeerName = null;
 }
 
 let onPeerIdentityReceived = null;
@@ -169,6 +142,7 @@ async function connectToPeer(targetName) {
     return new Promise((resolve, reject) => {
         conn.on("open", () => {
             console.log("Connected to:", remoteRealName);
+            remotePeerName = remoteRealName;
 
             conn.send({
                 type: "identity",
@@ -208,7 +182,7 @@ async function transferFiles(file) {
         return;
     }
 
-    const chunkSize = 16 * 1024; // 16KB
+    const chunkSize = 24 * 1024; // 24KB
     const fileReader = new FileReader();
 
     fileReader.onload = async (event) => {
@@ -252,6 +226,7 @@ function receiveFile(connection) {
     connection.on("data", (data) => {
         if (data.type === "identity") {
             console.log("Peer identity received:", data.name);
+            remotePeerName = data.name;
             if (onPeerIdentityReceived) onPeerIdentityReceived(data.name);
         } else if (data.type === "meta") {
             fileName = data.fileName;
