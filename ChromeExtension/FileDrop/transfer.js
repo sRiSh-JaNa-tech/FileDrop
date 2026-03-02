@@ -103,26 +103,34 @@ async function connectToPeer(targetName) {
 
     if (!peer) {
         console.error("Could not initialize peer");
-        return;
+        throw new Error("Your peer could not initialize. Try toggling Active off and on.");
     }
 
     console.log(`Searching for peer info for name: ${targetName}`);
-    const response = await fetch(`https://filedropserver-96q5.onrender.com/connect/${targetName}`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
-    });
+
+    let response;
+    try {
+        response = await fetch(`https://filedropserver-96q5.onrender.com/connect/${targetName}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+        });
+    } catch (networkErr) {
+        console.error("Network error:", networkErr);
+        throw new Error("Cannot reach server. Check your internet connection.");
+    }
+
+    if (response.status === 404) {
+        throw new Error(`"${targetName}" is not active. Ask them to activate first.`);
+    }
 
     if (!response.ok) {
-        console.error("Failed to get peer info for name:", targetName);
-        throw new Error("Target peer not found");
+        throw new Error("Server error. Please try again later.");
     }
 
     const result = await response.json();
 
     if (!result.data || !result.data.peerId) {
-        throw new Error("Invalid peer data received from server");
+        throw new Error(`"${targetName}" has invalid peer data. Ask them to re-activate.`);
     }
 
     const targetPeerId = result.data.peerId;
@@ -156,7 +164,10 @@ async function connectToPeer(targetName) {
         conn.on("error", (err) => {
             console.error("Connection error:", err);
             conn = null;
-            reject(err);
+            const msg = err.type === 'peer-unavailable'
+                ? `"${targetName}" is unreachable. They may have gone offline.`
+                : `Connection error: ${err.message || 'Unknown error'}`;
+            reject(new Error(msg));
         });
 
         conn.on('close', () => {
@@ -170,7 +181,7 @@ async function connectToPeer(targetName) {
             if (conn && !conn.open) {
                 conn.close();
                 conn = null;
-                reject(new Error("Connection timeout"));
+                reject(new Error("Connection timed out. Ensure both devices are on the same network."));
             }
         }, 15000);
     });

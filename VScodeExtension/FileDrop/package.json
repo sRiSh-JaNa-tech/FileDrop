@@ -1,33 +1,44 @@
 {
   "name": "filedrop",
   "displayName": "FileDrop",
-  "description": "",
-  "version": "0.0.1",
+  "description": "Peer-to-peer file sharing directly from VS Code — fast, local, and private.",
+  "version": "1.0.0",
+  "publisher": "sRiSh-JaNa-tech",
   "engines": {
     "vscode": "^1.109.0"
   },
   "categories": [
     "Other"
   ],
+  "icon": "assets/icon128.png",
   "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "filedrop.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "filedrop.open",
+        "title": "FileDrop: Open"
+      },
+      {
+        "command": "filedrop.sendFile",
+        "title": "FileDrop: Send File"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "vscode-test"
   },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
   "devDependencies": {
-    "@types/vscode": "^1.109.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "eslint": "^9.39.3",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "@types/vscode": "^1.109.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.39.3"
   }
 }

@@ -387,7 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error(err);
                     connectBtn.disabled = false;
                     connectBtn.innerText = 'Connect';
-                    statusText.innerText = "Connection failed";
+                    statusText.innerText = err.message || "Connection failed";
+                    statusText.style.color = '#ef4444';
                 }
             } else {
                 disconnectPeer();
