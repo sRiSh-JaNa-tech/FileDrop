@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FILEDROP</title>
+    <link rel="stylesheet" href="popup.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+    <div id="onboarding-ui" class="screen" style="display: none;">
+        <div class="onboarding-content">
+            <div class="onboarding-logo">
+                <img src="assets/airdrop.png" alt="FileDrop Logo">
+            </div>
+            <h2>Welcome to FileDrop</h2>
+            <p>Your random identity is ready</p>
+            <div class="onboarding-input-group">
+                <input type="text" id="initial-name-input" placeholder="Generating name..." readonly>
+                <button id="get-started-btn" class="btn-primary">Connect with this Name</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-ui" class="screen" style="display: none;">
+        <header class="header">
+            <div class="welcome">
+                <div class="name-row">
+                    <h1 id="user-name">Loading...</h1>
+                    <button id="copy-name-btn" class="icon-btn" title="Copy Name">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                    </button>
+                </div>
+                <div class="my-id-container">
+                    <span class="id-label">MY ID:</span>
+                    <span id="my-peer-id" class="id-value">Activate to get ID</span>
+                </div>
+            </div>
+            <button id="status-toggle-btn" class="status-btn inactive" aria-label="Toggle active status">
+                Inactive
+            </button>
+        </header>
+
+        <section class="connection-section">
+            <div class="input-wrapper">
+                <input type="text" id="peer-id" class="peer-input" placeholder="Enter target name" autocomplete="off">
+                <div class="connection-status" id="connection-status">Not connected</div>
+            </div>
+            <button class="btn btn-primary" id="connect-btn">Connect</button>
+        </section>
+
+        <div class="connection-help">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>Ensure both devices are on the same Wi-Fi network.</span>
+        </div>
+
+        <div id="recent-peers-container" class="recent-peers-container" style="display: none;">
+            <span class="recent-label">RECENT:</span>
+            <div id="recent-peers-list" class="recent-peers-list"></div>
+        </div>
+
+        <!-- New Transfer Box -->
+        <div class="transfer-box" id="transfer-box">
+            <div class="transfer-content">
+                <div class="transfer-info">
+                    <span id="file-name-label">No file selected</span>
+                    <span id="transfer-status">Ready</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            </div>
+            <button class="btn btn-secondary-outline" id="files-btn">Select File</button>
+        </div>
+
+        <div class="action-center">
+            <button class="avatar-button" id="avatar-btn" aria-label="Send File" title="Click to send file">
+                <div class="avatar-circle" id="avatar">
+                    <img src="assets/airdrop.png" alt="FileDrop Icon" class="avatar-image">
+                </div>
+            </button>
+        </div>
+
+        <input type="file" id="file-input" style="display: none;">
+    </div>
+
+    <script src="js/peerjs.min.js"></script>
+    <script src="popup.js"></script>
+    <script src="transfer.js"></script>
+</body>
+
+</html>

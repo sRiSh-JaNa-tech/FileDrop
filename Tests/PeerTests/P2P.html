@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Peer Receiver</title>
+</head>
+<body>
+
+<h2>Your Peer ID:</h2>
+<p id="peerId">Generating...</p>
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+<script>
+    const peerId = "user-" + Math.random().toString(36).substring(2, 10);
+    // Create peer (auto ID)
+    const peer = new Peer(peerId);
+
+    // Show generated peer ID
+    peer.on("open", (id) => {
+        console.log("My Peer ID:", id);
+        document.getElementById("peerId").innerText = id;
+    });
+
+    // Listen for incoming connection
+    peer.on("connection", (conn) => {
+        console.log("Someone connected:", conn.peer);
+
+        // Print Hello world when connected
+        conn.on("open", () => {
+            console.log("Hello world");
+        });
+
+        // Optional: receive messages
+        conn.on("data", (data) => {
+            console.log("Received:", data);
+        });
+    });
+
+    peer.on("error", (err) => {
+        console.error("Peer error:", err);
+    });
+</script>
+
+</body>
+</html>
