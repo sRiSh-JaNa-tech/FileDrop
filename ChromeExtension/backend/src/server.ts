@@ -19,8 +19,6 @@ app.get("/health", async (req, res) => {
   });
 });
 
-
-
 // Get peer info by userName
 app.get("/connect/:userName", async (req: Request, res: Response) => {
   try {
